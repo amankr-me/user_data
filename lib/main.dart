@@ -1,41 +1,103 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:user_data/provider/language.dart';
 import 'package:user_data/provider/user.dart';
 import 'package:user_data/provider/users.dart';
 import 'package:provider/provider.dart';
+import 'package:user_data/settings.dart';
 import 'package:user_data/success.dart';
 import 'package:user_data/users_screen.dart';
+import 'package:user_data/util/theme_notifier.dart';
+import 'package:user_data/values/theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:user_data/localization/language_constants.dart';
+
 
 void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  runApp(MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (ctx) => Users(),
           // value: Products(),
         ),
-      ],      child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-
-          primarySwatch: Colors.blue,
-
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ChangeNotifierProvider<ThemeNotifier>(
+          create: (_) => ThemeNotifier(darkTheme),
         ),
-        home:  MyHomePage(title: 'Save User Data'),
-        routes: {
-          Success.routeName:(ctx)=> Success(),
-          UserScreen.routeName:(ctx)=>UserScreen(),
+      ],
+      child:MyApp()),);
+}
+
+class MyApp extends StatefulWidget {
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _MyAppState state = context.findAncestorStateOfType<_MyAppState>();
+    state.setLocale(newLocale);
+  }
+
+  // This widget is the root of your application.
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale _locale;
+  setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
+  @override
+  void didChangeDependencies() {
+    getLocale().then((locale) {
+      setState(() {
+        this._locale = locale;
+        print(_locale);
+      });
+    });
+    super.didChangeDependencies();
+  }
+  @override
+  Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+    if (this._locale == null) {
+      return Container(
+        child: Center(
+          child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[800])),
+        ),
+      );
+    }else {
+      return MaterialApp(
+        title: 'Flutter Demo',
+        theme: themeNotifier.getTheme(),
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [
+          const Locale('en', ''), // English, no country code
+          const Locale('hi', ''), // Spanish, no country code
+        ],
+        localeResolutionCallback: (locale, supportedLocales) {
+          for (var supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == locale.languageCode &&
+                supportedLocale.countryCode == locale.countryCode) {
+              return supportedLocale;
+            }
+          }
+          return supportedLocales.first;
         },
-),
-    );
+        debugShowCheckedModeBanner: false,
+        home: MyHomePage(title: 'Save User Data'),
+        routes: {
+          Success.routeName: (ctx) => Success(),
+          UserScreen.routeName: (ctx) => UserScreen(),
+          SettingsPage.routeName: (ctx) => SettingsPage(),
+        },
+
+      );
+    }
   }
 }
 
@@ -95,6 +157,19 @@ class _MyHomePageState extends State<MyHomePage> {
     // print(_editedProduct.description);
     // print(_editedProduct.imageUrl);
   }
+  // Locale _locale;
+  // setLocale(Locale locale) {
+  //   setState(() {
+  //     _locale = locale;
+  //   });
+  // }
+  void _onchangedLanguage(Language language) async{
+    Locale _locale = await setLocale(language.languageCode);
+    MyApp.setLocale(context, _locale);
+    print(language.languageCode);
+  }
+
+
 @override
   void dispose() {
     // TODO: implement dispose
@@ -107,7 +182,29 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(getTranslated(context, 'home_page')),
+        actions: [
+
+          Padding(padding: EdgeInsets.all(8),
+          child: DropdownButton(
+            underline: SizedBox() ,
+              icon: Icon(Icons.language,color: Colors.white,),
+              items: Language.languageList().map<DropdownMenuItem<Language>>((lang) => DropdownMenuItem(
+                  value: lang,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                Text(lang.flaf),
+                Text(lang.name),
+              ],))).toList(),
+              onChanged: (Language language){
+                _onchangedLanguage(language);
+              }),
+          ),
+          IconButton(icon: Icon(Icons.settings), onPressed: (){
+            Navigator.of(context).pushNamed(SettingsPage.routeName);
+          }),
+        ],
       ),
       body: Center(
         child: Form(
@@ -268,4 +365,6 @@ class _MyHomePageState extends State<MyHomePage> {
       }),
     );
   }
+
+
 }
