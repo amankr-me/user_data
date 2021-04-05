@@ -70,14 +70,16 @@ class _MyAppState extends State<MyApp> {
       return MaterialApp(
         title: 'Flutter Demo',
         theme: themeNotifier.getTheme(),
+        locale: _locale,
         localizationsDelegates: [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+
         supportedLocales: [
-          const Locale('en', ''), // English, no country code
-          const Locale('hi', ''), // Spanish, no country code
+          const Locale('en', 'US'), // English, no country code
+          const Locale('hi', 'IN'), // Spanish, no country code
         ],
         localeResolutionCallback: (locale, supportedLocales) {
           for (var supportedLocale in supportedLocales) {
@@ -157,13 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // print(_editedProduct.description);
     // print(_editedProduct.imageUrl);
   }
-  // Locale _locale;
-  // setLocale(Locale locale) {
-  //   setState(() {
-  //     _locale = locale;
-  //   });
-  // }
-  void _onchangedLanguage(Language language) async{
+  void _onchangeLanguage(Language language) async{
     Locale _locale = await setLocale(language.languageCode);
     MyApp.setLocale(context, _locale);
     print(language.languageCode);
@@ -194,11 +190,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                Text(lang.flaf),
+                Text(lang.flag),
                 Text(lang.name),
               ],))).toList(),
               onChanged: (Language language){
-                _onchangedLanguage(language);
+                _onchangeLanguage(language);
               }),
           ),
           IconButton(icon: Icon(Icons.settings), onPressed: (){
@@ -214,7 +210,7 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.all(8.0),
             child: TextFormField(
               initialValue: _initValues['name'],
-              decoration: InputDecoration(labelText: 'Name'),
+              decoration: InputDecoration(labelText: 'Name',labelStyle: TextStyle(color: Colors.grey)),
               textInputAction: TextInputAction.next,
               onFieldSubmitted: (_) {
                 FocusScope.of(context).requestFocus(_genderFocusNode);
